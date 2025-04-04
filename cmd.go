@@ -13,7 +13,7 @@ var speed int
 var rootCmd = &cobra.Command{
 	Use:   "pipes",
 	Short: "Pipes screen saver CLI application",
-	Long:  `Pipes is a screen saver CLI application built using xTerm and Cobra in Go.`,
+	Long:  `Pipes is a screen saver CLI application built in Go.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		parsedSpeed, err := strconv.Atoi(speedStr)
 		if err != nil {

@@ -17,16 +17,17 @@ const (
 	maxSize = 5
 )
 
-var mutex sync.Mutex
-
 var (
-	horizontal = []byte("═")
-	vertical   = []byte("║")
-	upperRight = []byte("╗")
-	upperLeft  = []byte("╔")
-	lowerRight = []byte("╚")
-	lowerLeft  = []byte("╝")
-	clear      = []byte("\x1b[H\x1b[2J\x1b[3J")
+	horizontal      = "═"
+	vertical        = "║"
+	upperRight      = "╗"
+	upperLeft       = "╔"
+	lowerRight      = "╚"
+	lowerLeft       = "╝"
+	clearScreen     = "\x1b[H\x1b[2J\x1b[3J"
+	cursorInvisible = "\x1b[?25l"
+	cursorVisible   = "\x1b[?12l\x1b[?25h"
+	cursorMove      = "\x1b[%d;%dH%s"
 )
 
 var (
@@ -36,13 +37,13 @@ var (
 		{-1, 0},
 		{0, -1},
 	}
-	straight = map[[2]int][]byte{
+	straight = map[[2]int]string{
 		{1, 0}:  vertical,
 		{0, 1}:  horizontal,
 		{-1, 0}: vertical,
 		{0, -1}: horizontal,
 	}
-	angles = map[[2][2]int][]byte{
+	angles = map[[2][2]int]string{
 		{{1, 0}, {0, 1}}:   lowerRight,
 		{{1, 0}, {0, -1}}:  lowerLeft,
 		{{-1, 0}, {0, 1}}:  upperLeft,
@@ -72,7 +73,7 @@ func getDirection(current [2]int) [2]int {
 	return selected
 }
 
-func getAngle(current [2]int, change [2]int) []byte {
+func getAngle(current [2]int, change [2]int) string {
 	if current == change {
 		return straight[current]
 	}
@@ -84,7 +85,6 @@ func getTerminalSize() (int, int, error) {
 	if err != nil {
 		return width, height, fmt.Errorf("Unable to get terminal size: %v", err)
 	}
-	height--
 	return width, height, nil
 }
 
@@ -92,8 +92,9 @@ type Matrix struct {
 	x, y          int
 	height, width int
 	current       [2]int
-	data          [][][]byte
+	data          [][]string
 	delay         time.Duration
+	mutex         sync.Mutex
 }
 
 func MatrixConstructor(height int, width int, speed int) *Matrix {
@@ -109,42 +110,29 @@ func MatrixConstructor(height int, width int, speed int) *Matrix {
 }
 
 func (m *Matrix) fillEmptyBytes() {
-	m.data = make([][][]byte, m.height)
+	m.data = make([][]string, m.height)
 	for i := 0; i < m.height; i++ {
-		m.data[i] = make([][]byte, m.width)
-		for j := 0; j < m.width; j++ {
-			m.data[i][j] = []byte(" ")
-		}
+		m.data[i] = make([]string, m.width)
 	}
 }
 
-func (m *Matrix) update(content []byte) {
-	mutex.Lock()
-	defer mutex.Unlock()
+func (m *Matrix) update(content string) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	m.x, m.y = (m.x+m.current[0]+m.height)%m.height, (m.y+m.current[1]+m.width)%m.width
-	m.data[m.x][m.y] = content
-}
-
-func (m *Matrix) refresh() {
-	mutex.Lock()
-	defer mutex.Unlock()
-	matrix := m.data
-	output := make([]byte, 0, len(matrix[0])*len(matrix[0][0]))
-	for _, row := range matrix {
-		for _, chunk := range row {
-			output = append(output, chunk...)
-		}
+	if m.data[m.x][m.y] != content {
+		m.data[m.x][m.y] = content
+		fmt.Printf(cursorMove, m.x+1, m.y+1, content)
 	}
-	os.Stdout.Write(clear)
-	os.Stdout.Write(output)
 	time.Sleep(m.delay)
 }
 
 func (m *Matrix) reset() {
-	mutex.Lock()
-	defer mutex.Unlock()
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	width, height, err := getTerminalSize()
 	if err == nil {
+		fmt.Print(clearScreen)
 		m.height = height
 		m.width = width
 		m.fillEmptyBytes()
@@ -157,7 +145,6 @@ func (m *Matrix) handleSignals() chan os.Signal {
 	go func() {
 		for range sigWinchChan {
 			m.reset()
-			m.refresh()
 		}
 	}()
 
@@ -174,21 +161,24 @@ func run(speed int) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Print(clearScreen + cursorInvisible)
+	defer fmt.Print(cursorVisible)
+
 	matrix := MatrixConstructor(height, width, speed)
 	sigChan := matrix.handleSignals()
+
 	for {
 		select {
 		case <-sigChan:
-			fmt.Println("Exiting pipes...")
+			fmt.Println("\nExiting pipes...")
 			return nil
 		default:
 			change := getDirection(matrix.current)
 			matrix.update(getAngle(matrix.current, change))
 			matrix.current = change
-			matrix.refresh()
 			for i := 0; i <= getMultiplier(); i++ {
 				matrix.update(straight[matrix.current])
-				matrix.refresh()
 			}
 		}
 	}
