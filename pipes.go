@@ -104,12 +104,12 @@ func MatrixConstructor(height int, width int, speed int) *Matrix {
 		current: [2]int{0, 1},
 		delay:   time.Millisecond * time.Duration(100-speed),
 	}
-	matrix.fillEmptyBytes()
+	matrix.createEmptyData()
 	matrix.data[0][0] = horizontal
 	return &matrix
 }
 
-func (m *Matrix) fillEmptyBytes() {
+func (m *Matrix) createEmptyData() {
 	m.data = make([][]string, m.height)
 	for i := 0; i < m.height; i++ {
 		m.data[i] = make([]string, m.width)
@@ -135,7 +135,7 @@ func (m *Matrix) reset() {
 		fmt.Print(clearScreen)
 		m.height = height
 		m.width = width
-		m.fillEmptyBytes()
+		m.createEmptyData()
 	}
 }
 
