@@ -39,6 +39,10 @@ func (t *Terminal) ShowCursor() {
 	fmt.Print("\x1b[?12l\x1b[?25h")
 }
 
+func (t *Terminal) Colorize(content string, color string) string {
+	return color + content + "\x1b[0m"
+}
+
 func (t *Terminal) MoveCursor(x, y int) {
 	fmt.Printf("\x1b[%d;%dH", x+1, y+1)
 }

@@ -16,26 +16,34 @@ var (
 		{0, -1},
 	}
 	straight = map[Direction]string{
-		{1, 0}:  Vertical,
-		{0, 1}:  Horizontal,
-		{-1, 0}: Vertical,
-		{0, -1}: Horizontal,
+		{1, 0}:  DefaultPipeStyle.Vertical,
+		{0, 1}:  DefaultPipeStyle.Horizontal,
+		{-1, 0}: DefaultPipeStyle.Vertical,
+		{0, -1}: DefaultPipeStyle.Horizontal,
 	}
 	angles = map[[2]Direction]string{
-		{{1, 0}, {0, 1}}:   LowerRight,
-		{{1, 0}, {0, -1}}:  LowerLeft,
-		{{-1, 0}, {0, 1}}:  UpperLeft,
-		{{-1, 0}, {0, -1}}: UpperRight,
-		{{0, 1}, {1, 0}}:   UpperRight,
-		{{0, 1}, {-1, 0}}:  LowerLeft,
-		{{0, -1}, {1, 0}}:  UpperLeft,
-		{{0, -1}, {-1, 0}}: LowerRight,
+		{{1, 0}, {0, 1}}:   DefaultPipeStyle.LowerRight,
+		{{1, 0}, {0, -1}}:  DefaultPipeStyle.LowerLeft,
+		{{-1, 0}, {0, 1}}:  DefaultPipeStyle.UpperLeft,
+		{{-1, 0}, {0, -1}}: DefaultPipeStyle.UpperRight,
+		{{0, 1}, {1, 0}}:   DefaultPipeStyle.UpperRight,
+		{{0, 1}, {-1, 0}}:  DefaultPipeStyle.LowerLeft,
+		{{0, -1}, {1, 0}}:  DefaultPipeStyle.UpperLeft,
+		{{0, -1}, {-1, 0}}: DefaultPipeStyle.LowerRight,
 	}
 	redirect = map[Direction]Direction{
 		{1, 0}:  {-1, 0},
 		{0, 1}:  {0, -1},
 		{-1, 0}: {1, 0},
 		{0, -1}: {0, 1},
+	}
+	rainbowColors = []string{
+		Red,
+		Yellow,
+		Green,
+		Cyan,
+		Blue,
+		Magenta,
 	}
 )
 
@@ -58,7 +66,7 @@ func NewMatrix(term *Terminal, cfg *Config) *Matrix {
 		config:   cfg,
 	}
 	matrix.createEmptyData()
-	matrix.data[0][0] = Horizontal
+	matrix.data[0][0] = DefaultPipeStyle.Horizontal
 	return matrix
 }
 
@@ -74,11 +82,19 @@ func (m *Matrix) Update(content string) {
 	defer m.mutex.Unlock()
 
 	m.x, m.y = (m.x+m.current[0]+m.height)%m.height, (m.y+m.current[1]+m.width)%m.width
+
 	if m.data[m.x][m.y] != content {
+		colorCode := m.config.ColorTheme
+		if m.config.RainbowMode {
+			colorIndex := (m.x + m.y) % len(rainbowColors)
+			colorCode = rainbowColors[colorIndex]
+		}
+		coloredContent := m.terminal.Colorize(content, colorCode)
 		m.data[m.x][m.y] = content
-		m.terminal.WriteAt(m.x, m.y, content)
+		m.terminal.WriteAt(m.x, m.y, coloredContent)
 	}
-	time.Sleep(cfg.UpdateInterval)
+
+	time.Sleep(m.config.UpdateInterval)
 }
 
 func (m *Matrix) Reset() {
@@ -119,5 +135,26 @@ func (m *Matrix) Animate() {
 	m.current = change
 	for i := 0; i <= m.getMultiplier(); i++ {
 		m.Update(straight[m.current])
+	}
+}
+
+func (m *Matrix) updatePipeCharacters() {
+	style := m.config.PipeStyle
+	straight = map[Direction]string{
+		{1, 0}:  style.Vertical,
+		{0, 1}:  style.Horizontal,
+		{-1, 0}: style.Vertical,
+		{0, -1}: style.Horizontal,
+	}
+
+	angles = map[[2]Direction]string{
+		{{1, 0}, {0, 1}}:   style.LowerRight,
+		{{1, 0}, {0, -1}}:  style.LowerLeft,
+		{{-1, 0}, {0, 1}}:  style.UpperLeft,
+		{{-1, 0}, {0, -1}}: style.UpperRight,
+		{{0, 1}, {1, 0}}:   style.UpperRight,
+		{{0, 1}, {-1, 0}}:  style.LowerLeft,
+		{{0, -1}, {1, 0}}:  style.UpperLeft,
+		{{0, -1}, {-1, 0}}: style.LowerRight,
 	}
 }

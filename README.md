@@ -1,6 +1,6 @@
 # Pipes Screen Saver
 
-A terminal-based screen saver that creates an animated pipe maze effect. Built with Go.
+A terminal-based screen saver that creates an animated pipe maze effect, built with Go.
 
 ## Features
 
@@ -9,6 +9,8 @@ A terminal-based screen saver that creates an animated pipe maze effect. Built w
 - Terminal window resize support
 - Clean exit handling
 - Cross-platform support
+- Multiple pipe styles
+- Color themes
 
 ## Installation
 
@@ -73,6 +75,22 @@ The following parameters can be configured:
 - `--speed` or `-s`: Animation speed (0-100)
   - Default: 50
   - Higher values = faster animation
+- `--theme` or `-t`: Color theme
+  - Default: default
+  - Options: default, red, green, blue, cyan, magenta, yellow, rainbow
+- `--style` or `-l`: Pipe style
+  - Default: default
+  - Options: default, single, thick, rounded, dotted
+
+### Examples
+
+```bash
+# Using rainbow theme with thick pipes
+./pipes --theme rainbow --style thick
+
+# Using blue theme with rounded pipes at high speed
+./pipes -t blue -l rounded -s 80
+```
 
 ## Development
 
@@ -88,12 +106,9 @@ pipes/
 └── README.md      # Documentation
 ```
 
-### Building for Development
+### Purpose
 
-```bash
-# Build with debug symbols
-go build -gcflags="-N -l" -o pipes
-```
+This project is for learning purposes on the basis of build your own X philosophy and is inspired by https://github.com/pipeseroni/pipes.sh 
 
 ## Contributing
 

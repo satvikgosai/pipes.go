@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-func run(cfg *Config) error {
+func run() error {
 	term, err := NewTerminal()
 	if err != nil {
 		return err
@@ -16,7 +16,10 @@ func run(cfg *Config) error {
 	term.HideCursor()
 	defer term.ShowCursor()
 
+	cfg := NewConfig(speedInt, themeStr, styleStr)
+
 	m := NewMatrix(term, cfg)
+	m.updatePipeCharacters()
 
 	// Handle window resize
 	sigWinchChan := make(chan os.Signal, 1)
