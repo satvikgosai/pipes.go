@@ -1,4 +1,4 @@
-module github.com/satvikgosai/pipes
+module github.com/satvikgosai/pipes.go
 
 go 1.24.0
 
