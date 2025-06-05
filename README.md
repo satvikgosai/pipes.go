@@ -23,8 +23,8 @@ A terminal-based screen saver that creates an animated pipe maze effect, built w
 
 ```bash
 # Clone the repository
-git clone https://github.com/satvikgosai/pipes.git
-cd pipes
+git clone https://github.com/satvikgosai/pipes.go.git
+cd pipes.go
 
 # Build the binary
 go build -o pipes
@@ -41,7 +41,7 @@ sudo install pipes /usr/local/bin/
 
 ```bash
 # Install directly using go install
-go install github.com/satvikgosai/pipes@latest
+go install github.com/satvikgosai/pipes.go@latest
 ```
 
 ## Usage
@@ -97,7 +97,7 @@ The following parameters can be configured:
 ### Project Structure
 
 ```
-pipes/
+pipes.go/
 ├── cmd.go         # Command-line interface
 ├── config.go      # Configuration management
 ├── matrix.go      # Pipe animation logic
